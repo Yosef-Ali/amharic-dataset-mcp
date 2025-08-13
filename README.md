@@ -33,7 +33,7 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/amharic-ai/amharic-dataset-mcp.git
+git clone https://github.com/Yosef-Ali/amharic-dataset-mcp.git
 cd amharic-dataset-mcp
 
 # Install package
@@ -44,6 +44,15 @@ pip install -e ".[dev]"
 
 # Install with GPU support
 pip install -e ".[gpu]"
+
+# For Gemini integration
+pip install google-generativeai
+
+# For Qwen models
+pip install transformers torch
+
+# Complete installation with all AI models
+pip install -e ".[dev,gpu]" google-generativeai transformers torch
 ```
 
 ## 🔧 Quick Start
@@ -55,8 +64,9 @@ pip install -e ".[gpu]"
 amharic-dataset-server --port 3001
 ```
 
-### 2. Use with Claude Code
+### 2. Integration with AI Models
 
+#### Claude Code
 ```json
 {
   "mcpServers": {
@@ -66,6 +76,93 @@ amharic-dataset-server --port 3001
     }
   }
 }
+```
+
+#### Google Gemini Pro
+```python
+import google.generativeai as genai
+from amharic_dataset_mcp import AmharicDatasetPipeline
+
+# Configure Gemini
+genai.configure(api_key="your-gemini-api-key")
+model = genai.GenerativeModel('gemini-pro')
+
+# Use with Amharic MCP tools
+pipeline = AmharicDatasetPipeline()
+amharic_data = pipeline.collect_authentic_data(sources=["bbc_amharic"], max_items=100)
+
+# Enhance with Gemini for translation/analysis
+for item in amharic_data:
+    prompt = f"Analyze this Amharic text quality: {item['text']}"
+    response = model.generate_content(prompt)
+    item['gemini_analysis'] = response.text
+```
+
+#### Alibaba Qwen Models
+```python
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from amharic_dataset_mcp import AmharicQualityScorer
+
+# Load Qwen model
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-7B-Instruct")
+model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-7B-Instruct")
+
+# Quality scoring with Qwen
+scorer = AmharicQualityScorer()
+amharic_text = "እንደምን አደርክ? ደህና ነኝ፣ እግዚአብሔር ይመስገን።"
+
+# Get quality score from MCP
+quality_result = scorer.calculate_overall_quality_score(amharic_text)
+
+# Use Qwen for additional analysis
+prompt = f"Rate the naturalness of this Amharic conversation: {amharic_text}"
+inputs = tokenizer(prompt, return_tensors="pt")
+outputs = model.generate(**inputs, max_new_tokens=150)
+qwen_analysis = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+print(f"MCP Score: {quality_result['overall_score']:.3f}")
+print(f"Qwen Analysis: {qwen_analysis}")
+```
+
+#### Multi-Model Ensemble
+```python
+from amharic_dataset_mcp import AmharicDatasetPipeline
+import google.generativeai as genai
+from transformers import pipeline
+
+# Initialize models
+genai.configure(api_key="your-key")
+gemini = genai.GenerativeModel('gemini-pro')
+qwen_pipe = pipeline("text-generation", model="Qwen/Qwen2.5-3B-Instruct")
+
+# Amharic pipeline
+amharic_pipeline = AmharicDatasetPipeline()
+
+async def multi_model_quality_check(text):
+    """Use multiple models for comprehensive Amharic quality assessment"""
+    
+    # 1. MCP Quality Scoring
+    mcp_score = amharic_pipeline.quality_scorer.calculate_overall_quality_score(text)
+    
+    # 2. Gemini Analysis
+    gemini_prompt = f"Rate this Amharic text authenticity (1-10): {text}"
+    gemini_response = gemini.generate_content(gemini_prompt)
+    
+    # 3. Qwen Analysis
+    qwen_prompt = f"Analyze Amharic grammar: {text}"
+    qwen_response = qwen_pipe(qwen_prompt, max_new_tokens=100)
+    
+    return {
+        "text": text,
+        "mcp_score": mcp_score['overall_score'],
+        "mcp_category": mcp_score['quality_category'],
+        "gemini_analysis": gemini_response.text,
+        "qwen_analysis": qwen_response[0]['generated_text'],
+        "ensemble_recommendation": "high_quality" if mcp_score['overall_score'] > 0.8 else "needs_review"
+    }
+
+# Example usage
+result = await multi_model_quality_check("የኢትዮጵያ መንግስት አዲስ ፖሊሲ አወጣ።")
 ```
 
 ### 3. Available MCP Tools
@@ -201,11 +298,14 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - **BBC Amharic** and **VOA Amharic** for authentic content sources
 - **Ethiopian diaspora** for cultural validation and feedback
 - **Anthropic** for MCP protocol and Claude integration
+- **Google** for Gemini Pro model capabilities
+- **Alibaba** for Qwen model series
+- **Hugging Face** for transformers infrastructure
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/amharic-ai/amharic-dataset-mcp/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/amharic-ai/amharic-dataset-mcp/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Yosef-Ali/amharic-dataset-mcp/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Yosef-Ali/amharic-dataset-mcp/discussions)
 - **Documentation**: [Full Documentation](docs/)
 
 ---

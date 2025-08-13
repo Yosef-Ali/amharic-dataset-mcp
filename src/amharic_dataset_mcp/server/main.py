@@ -46,7 +46,7 @@ class AmharicMCPServer:
         """Register all Amharic dataset tools with MCP server"""
         
         # Data Collection Tool
-        @self.server.tool()
+        @self.server.call_tool()
         async def collect_amharic_data(
             sources: Optional[List[str]] = None,
             max_items: int = 100,
@@ -96,7 +96,7 @@ class AmharicMCPServer:
                 raise McpError(f"Data collection failed: {e}")
         
         # Quality Enhancement Tool  
-        @self.server.tool()
+        @self.server.call_tool()
         async def enhance_amharic_quality(
             texts: List[str],
             context_category: str = "general"
@@ -135,7 +135,7 @@ class AmharicMCPServer:
                 raise McpError(f"Quality enhancement failed: {e}")
         
         # Quality Scoring Tool
-        @self.server.tool()
+        @self.server.call_tool()
         async def score_amharic_quality(
             text: str,
             detailed_analysis: bool = True
@@ -177,7 +177,7 @@ class AmharicMCPServer:
                 raise McpError(f"Quality scoring failed: {e}")
         
         # Database Storage Tool
-        @self.server.tool()
+        @self.server.call_tool()
         async def store_amharic_data(
             data: List[Dict[str, Any]],
             database_url: str = "sqlite:///amharic_dataset.db"
@@ -222,7 +222,7 @@ class AmharicMCPServer:
                 raise McpError(f"Data storage failed: {e}")
         
         # Batch Processing Tool
-        @self.server.tool()
+        @self.server.call_tool()
         async def batch_process_dataset(
             input_data: List[Dict[str, Any]],
             quality_threshold: float = 0.6,
